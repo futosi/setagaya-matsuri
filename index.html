@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>世田谷区 お祭りマップ＆カレンダー</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+  :root{
+    --bg:#f7f5f0; --panel:#ffffff; --ink:#2b2320; --muted:#8a7f77;
+    --accent:#e0592a; --accent-soft:#fdeee6; --line:#eae4dc;
+    --confirmed:#d84a1e; --annual:#c8942f; --shadow:0 2px 10px rgba(0,0,0,.08);
+    --header-h:54px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+    color:var(--ink); background:var(--bg); overflow:hidden;
+  }
+  header{
+    height:var(--header-h); display:flex; align-items:center; gap:8px;
+    padding:0 14px; background:var(--accent); color:#fff; box-shadow:var(--shadow);
+    position:relative; z-index:1200;
+  }
+  header .logo{font-size:20px;}
+  header h1{font-size:16px; margin:0; font-weight:700; letter-spacing:.02em;}
+  header .sub{font-size:11px; opacity:.85; margin-left:auto;}
+
+  .app{
+    display:flex; height:calc(100% - var(--header-h));
+  }
+  #map{flex:1 1 55%; min-width:0; height:100%; background:#dfe8e4;}
+  .side{
+    flex:0 0 380px; max-width:42%; height:100%; overflow-y:auto;
+    background:var(--panel); border-left:1px solid var(--line);
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Calendar */
+  .cal{padding:12px 12px 4px;}
+  .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .cal-head .mlabel{font-size:16px; font-weight:700;}
+  .cal-nav{display:flex; gap:6px;}
+  .cal-nav button, .today-btn{
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+    border-radius:8px; padding:6px 10px; font-size:13px; cursor:pointer; line-height:1;
+  }
+  .cal-nav button:active,.today-btn:active{background:var(--accent-soft);}
+  .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+  .dow{text-align:center; font-size:11px; color:var(--muted); padding:2px 0;}
+  .dow.sun{color:#d5533f;} .dow.sat{color:#3f7ad5;}
+  .cell{
+    position:relative; aspect-ratio:1/1; border-radius:8px; border:1px solid transparent;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:13px; cursor:pointer; user-select:none; background:#faf8f5;
+  }
+  .cell.empty{background:transparent; cursor:default;}
+  .cell.has:hover{border-color:var(--accent);}
+  .cell.sun{color:#d5533f;} .cell.sat{color:#3f7ad5;}
+  .cell.today{outline:2px solid var(--accent); outline-offset:-2px; font-weight:700;}
+  .cell.selected{background:var(--accent); color:#fff !important;}
+  .cell .dots{position:absolute; bottom:5px; display:flex; gap:2px;}
+  .cell .dot{width:5px; height:5px; border-radius:50%;}
+  .dot.confirmed{background:var(--confirmed);} .dot.annual{background:var(--annual);}
+  .cell.selected .dot{background:#fff;}
+  .cal-legend{display:flex; gap:14px; font-size:11px; color:var(--muted); padding:8px 2px 2px;}
+  .cal-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .cal-legend i{width:8px; height:8px; border-radius:50%; display:inline-block;}
+
+  /* List */
+  .list{padding:6px 12px 24px;}
+  .list-title{font-size:13px; font-weight:700; color:var(--muted); margin:10px 2px 8px; display:flex; align-items:center; gap:8px;}
+  .list-title .clear{margin-left:auto; font-size:11px; color:var(--accent); cursor:pointer; font-weight:600;}
+  .card{
+    border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin-bottom:9px;
+    cursor:pointer; transition:box-shadow .15s, border-color .15s; background:#fff;
+  }
+  .card:hover{box-shadow:var(--shadow); border-color:var(--accent);}
+  .card.active{border-color:var(--accent); box-shadow:var(--shadow);}
+  .card .row1{display:flex; align-items:baseline; gap:8px;}
+  .card .cname{font-size:15px; font-weight:700;}
+  .card .badge{font-size:10px; padding:2px 7px; border-radius:99px; color:#fff; white-space:nowrap;}
+  .badge.confirmed{background:var(--confirmed);} .badge.annual{background:var(--annual);}
+  .card .when{font-size:12.5px; color:var(--accent); font-weight:600; margin-top:4px;}
+  .card .place{font-size:12px; color:var(--muted); margin-top:2px;}
+  .card .desc{font-size:12px; color:#5f564f; margin-top:6px; line-height:1.5; display:none;}
+  .card.active .desc{display:block;}
+  .card .more{font-size:12px; margin-top:7px; display:none;}
+  .card.active .more{display:block;}
+  .card .more a{color:var(--accent);}
+  .empty-msg{font-size:13px; color:var(--muted); padding:16px 4px; text-align:center;}
+
+  /* Mobile toggle bar (hidden on desktop) */
+  .mobile-tabs{display:none;}
+
+  @media (max-width:760px){
+    :root{--header-h:48px;}
+    header h1{font-size:14px;} header .sub{display:none;}
+    .app{flex-direction:column;}
+    #map{flex:none; width:100%; height:42vh;}
+    .side{flex:1 1 auto; max-width:none; width:100%; border-left:none; border-top:1px solid var(--line);}
+    .cell{font-size:12px;}
+    /* mobile view switch */
+    .mobile-tabs{
+      display:flex; position:sticky; top:0; z-index:20; background:var(--panel);
+      border-bottom:1px solid var(--line);
+    }
+    .mobile-tabs button{
+      flex:1; border:none; background:none; padding:11px 0; font-size:13px; font-weight:700;
+      color:var(--muted); border-bottom:2px solid transparent;
+    }
+    .mobile-tabs button.on{color:var(--accent); border-bottom-color:var(--accent);}
+    body.m-list .cal{display:none;}
+    body.m-cal .list .list-title{display:none;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">🏮</span>
+  <h1>世田谷区 お祭りマップ＆カレンダー</h1>
+  <span class="sub">地図とカレンダーで探す</span>
+</header>
+
+<div class="app">
+  <div id="map"></div>
+  <div class="side">
+    <div class="mobile-tabs">
+      <button data-view="cal" class="on">📅 カレンダー</button>
+      <button data-view="list">📋 一覧</button>
+    </div>
+
+    <div class="cal">
+      <div class="cal-head">
+        <div class="mlabel" id="mlabel"></div>
+        <div class="cal-nav">
+          <button id="prev" aria-label="前の月">‹</button>
+          <button class="today-btn" id="today">今日</button>
+          <button id="next" aria-label="次の月">›</button>
+        </div>
+      </div>
+      <div class="grid" id="dow"></div>
+      <div class="grid" id="days"></div>
+      <div class="cal-legend">
+        <span><i style="background:var(--confirmed)"></i>日程確定</span>
+        <span><i style="background:var(--annual)"></i>例年開催（要確認）</span>
+      </div>
+    </div>
+
+    <div class="list">
+      <div class="list-title" id="listTitle"></div>
+      <div id="cards"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="festivals.js"></script>
+<script>
+(function(){
+  "use strict";
+  const F = window.FESTIVALS || [];
+  const TODAY = new Date(2026, 6, 15); // 2026-07-15（アプリ基準日）
+  const WD = ["日","月","火","水","木","金","土"];
+
+  // ---- date helpers ----
+  const ymd = d => d.toISOString().slice(0,10);
+  const parse = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+  function inRange(dateStr, f){
+    return f.dates.some(r => dateStr >= r.start && dateStr <= r.end);
+  }
+  // 指定日に開催中の祭り
+  function festsOn(dateStr){ return F.filter(f => inRange(dateStr, f)); }
+  // 指定月に1日でもかかる祭り（開始日順）
+  function festsInMonth(y, m){ // m:0-based
+    const first = `${y}-${String(m+1).padStart(2,"0")}-01`;
+    const last  = `${y}-${String(m+1).padStart(2,"0")}-31`;
+    return F.filter(f => f.dates.some(r => r.start <= last && r.end >= first))
+            .sort((a,b)=> firstDate(a).localeCompare(firstDate(b)));
+  }
+  function firstDate(f){ return f.dates.map(r=>r.start).sort()[0]; }
+  function fmtRange(r){
+    const s=parse(r.start), e=parse(r.end);
+    const f=d=>`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
+    return r.start===r.end ? f(s) : `${f(s)}〜${f(e)}`;
+  }
+  function whenLabel(f){ return f.dates.map(fmtRange).join("・"); }
+
+  // ---- state ----
+  let viewY = TODAY.getFullYear(), viewM = TODAY.getMonth();
+  let selectedDate = null;   // "YYYY-MM-DD" or null
+  let activeId = null;
+
+  // ---- map ----
+  const map = L.map("map", {zoomControl:true}).setView([35.646, 139.653], 13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom:19, attribution:'© OpenStreetMap'
+  }).addTo(map);
+
+  function pin(color){
+    return L.divIcon({
+      className:"", html:
+      `<div style="width:26px;height:26px;transform:translate(-13px,-26px)">
+        <svg viewBox="0 0 26 34" width="26" height="34">
+          <path d="M13 0C5.8 0 0 5.8 0 13c0 9.7 13 21 13 21s13-11.3 13-21C26 5.8 20.2 0 13 0z" fill="${color}"/>
+          <circle cx="13" cy="13" r="5.2" fill="#fff"/>
+        </svg></div>`,
+      iconSize:[26,34], iconAnchor:[13,34]
+    });
+  }
+  const markers = {};
+  F.forEach(f=>{
+    const color = f.status==="confirmed" ? "var(--confirmed)" :  "#c8942f";
+    const c = f.status==="confirmed" ? "#d84a1e" : "#c8942f";
+    const mk = L.marker([f.lat,f.lng], {icon:pin(c)}).addTo(map);
+    mk.on("click", ()=>{ selectCard(f.id, true); });
+    markers[f.id]=mk;
+  });
+
+  function updateMarkerVisibility(){
+    const shownIds = new Set(currentList().map(f=>f.id));
+    F.forEach(f=>{
+      const mk=markers[f.id];
+      if(shownIds.has(f.id)){ if(!map.hasLayer(mk)) mk.addTo(map); }
+      else { if(map.hasLayer(mk)) map.removeLayer(mk); }
+    });
+  }
+
+  // ---- current list (depends on selectedDate / month) ----
+  function currentList(){
+    return selectedDate ? festsOn(selectedDate) : festsInMonth(viewY, viewM);
+  }
+
+  // ---- calendar render ----
+  const dowEl=document.getElementById("dow");
+  WD.forEach((w,i)=>{
+    const d=document.createElement("div");
+    d.className="dow"+(i===0?" sun":i===6?" sat":"");
+    d.textContent=w; dowEl.appendChild(d);
+  });
+
+  function renderCal(){
+    document.getElementById("mlabel").textContent = `${viewY}年 ${viewM+1}月`;
+    const days=document.getElementById("days");
+    days.innerHTML="";
+    const first=new Date(viewY,viewM,1);
+    const startPad=first.getDay();
+    const dim=new Date(viewY,viewM+1,0).getDate();
+    const todayStr=ymd(TODAY);
+
+    for(let i=0;i<startPad;i++){
+      const e=document.createElement("div"); e.className="cell empty"; days.appendChild(e);
+    }
+    for(let d=1; d<=dim; d++){
+      const dateStr=`${viewY}-${String(viewM+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      const dow=new Date(viewY,viewM,d).getDay();
+      const fs=festsOn(dateStr);
+      const cell=document.createElement("div");
+      cell.className="cell"+(dow===0?" sun":dow===6?" sat":"")+(fs.length?" has":"");
+      if(dateStr===todayStr) cell.classList.add("today");
+      if(dateStr===selectedDate) cell.classList.add("selected");
+      cell.innerHTML=`<span>${d}</span>`;
+      if(fs.length){
+        const dots=document.createElement("div"); dots.className="dots";
+        const kinds=[...new Set(fs.map(f=>f.status))];
+        kinds.slice(0,3).forEach(k=>{
+          const dot=document.createElement("span"); dot.className="dot "+k; dots.appendChild(dot);
+        });
+        cell.appendChild(dots);
+        cell.onclick=()=>{
+          selectedDate = (selectedDate===dateStr)? null : dateStr;
+          activeId=null; renderAll(); fitToList();
+        };
+      }
+      days.appendChild(cell);
+    }
+  }
+
+  // ---- list render ----
+  function renderList(){
+    const cards=document.getElementById("cards");
+    const title=document.getElementById("listTitle");
+    const list=currentList();
+    if(selectedDate){
+      const d=parse(selectedDate);
+      title.innerHTML=`${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})のお祭り <span class="clear" id="clearSel">✕ 選択解除</span>`;
+    }else{
+      title.innerHTML=`${viewM+1}月のお祭り（${list.length}件）`;
+    }
+    cards.innerHTML="";
+    if(!list.length){
+      cards.innerHTML=`<div class="empty-msg">この${selectedDate?"日":"月"}に登録されたお祭りはありません。</div>`;
+    }
+    list.forEach(f=>{
+      const card=document.createElement("div");
+      card.className="card"+(f.id===activeId?" active":"");
+      card.innerHTML=`
+        <div class="row1">
+          <span class="cname">${f.name}</span>
+          <span class="badge ${f.status}">${f.status==="confirmed"?"確定":"例年"}</span>
+        </div>
+        <div class="when">📅 ${whenLabel(f)}${f.time?" ／ "+f.time:""}</div>
+        <div class="place">📍 ${f.place}</div>
+        <div class="desc">${f.desc}</div>
+        <div class="more"><a href="${f.url}" target="_blank" rel="noopener">詳細・最新情報を見る ↗</a></div>`;
+      card.onclick=(e)=>{ if(e.target.tagName!=="A") selectCard(f.id, true); };
+      cards.appendChild(card);
+    });
+    const clr=document.getElementById("clearSel");
+    if(clr) clr.onclick=(e)=>{ e.stopPropagation(); selectedDate=null; activeId=null; renderAll(); fitToList(); };
+  }
+
+  function selectCard(id, pan){
+    activeId = (activeId===id)? null : id;
+    renderList(); updateMarkerVisibility();
+    const f=F.find(x=>x.id===id);
+    if(activeId && f){
+      if(pan) map.setView([f.lat,f.lng], 15, {animate:true});
+      markers[f.id] && markers[f.id].openPopup && null;
+      // scroll card into view
+      const idx=currentList().findIndex(x=>x.id===id);
+      const el=document.getElementById("cards").children[idx];
+      if(el) el.scrollIntoView({behavior:"smooth", block:"nearest"});
+      if(document.body.classList.contains("m-cal")) switchMobile("list");
+    }
+    // re-mark selected on markers via re-render not needed
+    renderCal();
+  }
+
+  function fitToList(){
+    const list=currentList();
+    if(!list.length) return;
+    const b=L.latLngBounds(list.map(f=>[f.lat,f.lng]));
+    map.fitBounds(b.pad(0.35), {maxZoom:15, animate:true});
+  }
+
+  function renderAll(){ renderCal(); renderList(); updateMarkerVisibility(); }
+
+  // ---- controls ----
+  document.getElementById("prev").onclick=()=>{ viewM--; if(viewM<0){viewM=11;viewY--;} selectedDate=null; activeId=null; renderAll(); fitToList(); };
+  document.getElementById("next").onclick=()=>{ viewM++; if(viewM>11){viewM=0;viewY++;} selectedDate=null; activeId=null; renderAll(); fitToList(); };
+  document.getElementById("today").onclick=()=>{ viewY=TODAY.getFullYear(); viewM=TODAY.getMonth(); selectedDate=ymd(TODAY); activeId=null; renderAll(); fitToList(); };
+
+  // ---- mobile tabs ----
+  function switchMobile(view){
+    document.body.classList.toggle("m-list", view==="list");
+    document.body.classList.toggle("m-cal", view==="cal");
+    document.querySelectorAll(".mobile-tabs button").forEach(b=>b.classList.toggle("on", b.dataset.view===view));
+    setTimeout(()=>map.invalidateSize(), 60);
+  }
+  document.querySelectorAll(".mobile-tabs button").forEach(b=>{
+    b.onclick=()=>switchMobile(b.dataset.view);
+  });
+  if(window.matchMedia("(max-width:760px)").matches){ document.body.classList.add("m-cal"); }
+
+  window.addEventListener("resize", ()=>map.invalidateSize());
+
+  // ---- init ----
+  renderAll();
+  fitToList();
+})();
+</script>
+</body>
+</html>
