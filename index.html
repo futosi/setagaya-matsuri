@@ -91,6 +91,14 @@
   .card.active .more{display:block;}
   .card .more a{color:var(--accent);}
   .empty-msg{font-size:13px; color:var(--muted); padding:16px 4px; text-align:center;}
+  .past-toggle{
+    width:100%; border:1px dashed var(--line); background:#faf8f5; color:#8a7f77;
+    border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer;
+    margin:2px 0 9px; text-align:left;
+  }
+  .past-toggle:hover{border-color:var(--accent); color:var(--accent);}
+  .card.past{opacity:.62;}
+  .card.past .when{color:var(--muted);}
 
   /* Filters */
   .filters{padding:10px 12px 4px; border-bottom:1px solid var(--line);}
@@ -244,6 +252,12 @@
   let viewY = TODAY.getFullYear(), viewM = TODAY.getMonth();
   let selectedDate = null;   // "YYYY-MM-DD" or null
   let activeId = null;
+  let showPast = false;      // 終了したお祭りをトグルで表示
+
+  // 全ての開催日が今日より前に終わっていれば「過去」
+  const TODAY_STR = ymd(TODAY);
+  function isPast(f){ return f.dates.every(r => r.end < TODAY_STR); }
+  function visibleByPast(f){ return showPast || !isPast(f); }
 
   // ---- map ----
   const map = L.map("map", {zoomControl:true}).setView([35.646, 139.653], 13);
@@ -299,10 +313,13 @@
   function festsAll(){
     return F.filter(passesFilter).sort((a,b)=> firstDate(a).localeCompare(firstDate(b)));
   }
-  function currentList(){
+  // 現在ビューの対象（過去フィルタ前）
+  function currentBase(){
     if(FILTER.text) return festsAll();            // 検索時は月に関係なく年間から探す
     return selectedDate ? festsOn(selectedDate) : festsInMonth(viewY, viewM);
   }
+  // 地図ピン・fitBounds 用（過去フィルタ適用）
+  function currentList(){ return currentBase().filter(visibleByPast); }
 
   // ---- calendar render ----
   const dowEl=document.getElementById("dow");
@@ -327,7 +344,7 @@
     for(let d=1; d<=dim; d++){
       const dateStr=`${viewY}-${String(viewM+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
       const dow=new Date(viewY,viewM,d).getDay();
-      const fs=festsOn(dateStr);
+      const fs=festsOn(dateStr).filter(visibleByPast);
       const cell=document.createElement("div");
       cell.className="cell"+(dow===0?" sun":dow===6?" sat":"")+(fs.length?" has":"");
       if(dateStr===todayStr) cell.classList.add("today");
@@ -350,38 +367,61 @@
   }
 
   // ---- list render ----
+  function makeCard(f, isPastFlag){
+    const card=document.createElement("div");
+    card.className="card"+(f.id===activeId?" active":"")+(isPastFlag?" past":"");
+    card.dataset.id=f.id;
+    card.innerHTML=`
+      <div class="row1">
+        <span class="cname">${f.name}</span>
+        <span class="badge ${f.status}">${f.status==="confirmed"?"確定":"例年"}</span>
+      </div>
+      <div class="when">📅 ${whenLabel(f)}${f.time?" ／ "+f.time:""}</div>
+      <div class="place">📍 ${f.place}</div>
+      <div class="desc">${f.desc}</div>
+      <div class="more"><a href="${f.url}" target="_blank" rel="noopener">詳細・最新情報を見る ↗</a></div>`;
+    card.onclick=(e)=>{ if(e.target.tagName!=="A") selectCard(f.id, true); };
+    return card;
+  }
+
   function renderList(){
     const cards=document.getElementById("cards");
     const title=document.getElementById("listTitle");
-    const list=currentList();
+    const base=currentBase();
+    const upcoming=base.filter(f=>!isPast(f));
+    const past=base.filter(f=>isPast(f));
+
     if(FILTER.text){
-      title.innerHTML=`🔍「${searchEl.value}」の検索結果（${list.length}件） <span class="clear" id="clearSel">✕ 解除</span>`;
+      title.innerHTML=`🔍「${searchEl.value}」の検索結果（${upcoming.length}件） <span class="clear" id="clearSel">✕ 解除</span>`;
     }else if(selectedDate){
       const d=parse(selectedDate);
       title.innerHTML=`${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})のお祭り <span class="clear" id="clearSel">✕ 選択解除</span>`;
     }else{
-      title.innerHTML=`${viewM+1}月のお祭り（${list.length}件）`;
+      title.innerHTML=`${viewM+1}月のお祭り（${upcoming.length}件）`;
     }
+
     cards.innerHTML="";
-    if(!list.length){
+    if(!upcoming.length && !past.length){
       const filtered = FILTER.cats.size || FILTER.text;
       cards.innerHTML=`<div class="empty-msg">${filtered?"絞り込み条件に合うお祭りが見つかりません。":"この"+(selectedDate?"日":"月")+"に登録されたお祭りはありません。"}</div>`;
+    }else{
+      upcoming.forEach(f=> cards.appendChild(makeCard(f,false)));
+      if(!upcoming.length){
+        const note=document.createElement("div");
+        note.className="empty-msg"; note.style.padding="10px 4px";
+        note.textContent="今後のお祭りはありません。";
+        cards.appendChild(note);
+      }
+      if(past.length){
+        const toggle=document.createElement("button");
+        toggle.className="past-toggle";
+        toggle.textContent = (showPast?"▾ 終了したお祭りを隠す（":"▸ 終了したお祭りを表示（")+past.length+"件）";
+        toggle.onclick=()=>{ showPast=!showPast; activeId=null; renderAll(); fitToList(); };
+        cards.appendChild(toggle);
+        if(showPast) past.forEach(f=> cards.appendChild(makeCard(f,true)));
+      }
     }
-    list.forEach(f=>{
-      const card=document.createElement("div");
-      card.className="card"+(f.id===activeId?" active":"");
-      card.innerHTML=`
-        <div class="row1">
-          <span class="cname">${f.name}</span>
-          <span class="badge ${f.status}">${f.status==="confirmed"?"確定":"例年"}</span>
-        </div>
-        <div class="when">📅 ${whenLabel(f)}${f.time?" ／ "+f.time:""}</div>
-        <div class="place">📍 ${f.place}</div>
-        <div class="desc">${f.desc}</div>
-        <div class="more"><a href="${f.url}" target="_blank" rel="noopener">詳細・最新情報を見る ↗</a></div>`;
-      card.onclick=(e)=>{ if(e.target.tagName!=="A") selectCard(f.id, true); };
-      cards.appendChild(card);
-    });
+
     const clr=document.getElementById("clearSel");
     if(clr) clr.onclick=(e)=>{ e.stopPropagation();
       if(FILTER.text){ searchEl.value=""; FILTER.text=""; searchClear.hidden=true; }
@@ -398,8 +438,7 @@
       if(pan) map.setView([f.lat,f.lng], 15, {animate:true});
       markers[f.id] && markers[f.id].openPopup && null;
       // scroll card into view
-      const idx=currentList().findIndex(x=>x.id===id);
-      const el=document.getElementById("cards").children[idx];
+      const el=document.querySelector('#cards .card[data-id="'+id+'"]');
       if(el) el.scrollIntoView({behavior:"smooth", block:"nearest"});
       if(document.body.classList.contains("m-cal")) switchMobile("list");
     }
