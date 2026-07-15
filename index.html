@@ -79,12 +79,20 @@
   }
   .card:hover{box-shadow:var(--shadow); border-color:var(--accent);}
   .card.active{border-color:var(--accent); box-shadow:var(--shadow);}
+  .card .card-top{display:flex; gap:11px; align-items:flex-start;}
+  .card-main{flex:1; min-width:0;}
+  .thumb{
+    flex:0 0 auto; position:relative; border-radius:10px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    font-size:27px; line-height:1; color:#fff; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
+  }
   .card .row1{display:flex; align-items:baseline; gap:8px;}
   .card .cname{font-size:15px; font-weight:700;}
   .card .badge{font-size:10px; padding:2px 7px; border-radius:99px; color:#fff; white-space:nowrap;}
   .badge.confirmed{background:var(--confirmed);} .badge.annual{background:var(--annual);}
   .card .when{font-size:12.5px; color:var(--accent); font-weight:600; margin-top:4px;}
   .card .place{font-size:12px; color:var(--muted); margin-top:2px;}
+  .card .stalls{font-size:11.5px; color:#7a6f66; margin-top:3px;}
   .card .desc{font-size:12px; color:#5f564f; margin-top:6px; line-height:1.5; display:none;}
   .card.active .desc{display:block;}
   .card .more{font-size:12px; margin-top:7px; display:none;}
@@ -217,10 +225,41 @@
   function passesFilter(f){
     if(FILTER.cats.size && !FILTER.cats.has(groupOf(f.category))) return false;
     if(FILTER.text){
-      const hay = (f.name+" "+f.place+" "+f.category+" "+(f.desc||"")).toLowerCase();
+      const hay = (f.name+" "+f.place+" "+f.category+" "+(f.desc||"")+" "+(f.stalls||"")).toLowerCase();
       if(hay.indexOf(FILTER.text) < 0) return false;
     }
     return true;
+  }
+
+  // ---- サムネイル・屋台情報 ----
+  const CAT_ICON = {"例大祭":"⛩️","盆踊り":"🏮","夏祭り":"🎆","阿波踊り":"🪭","市・縁日":"🎐"};
+  const CAT_GRAD = {
+    "例大祭":"linear-gradient(135deg,#e0592a,#b5341a)",
+    "盆踊り":"linear-gradient(135deg,#e8863a,#c85a1c)",
+    "夏祭り":"linear-gradient(135deg,#3a86c8,#2456a0)",
+    "阿波踊り":"linear-gradient(135deg,#8a5cc8,#5a3a9c)",
+    "市・縁日":"linear-gradient(135deg,#3aab7a,#1f7a56)"
+  };
+  function catIcon(f){ return CAT_ICON[groupOf(f.category)] || "🏮"; }
+  function catGrad(f){ return CAT_GRAD[groupOf(f.category)] || CAT_GRAD["盆踊り"]; }
+  // 画像があれば写真、なければカテゴリ別の絵文字サムネイル（写真読込失敗時は絵文字にフォールバック）
+  function thumbHTML(f, size){
+    const s = size||58;
+    const base = `class="thumb thumb-emoji" style="width:${s}px;height:${s}px;background:${catGrad(f)}"`;
+    if(f.image){
+      return `<div ${base}>${catIcon(f)}<img src="${f.image}" alt="" loading="lazy" onerror="this.remove()"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></div>`;
+    }
+    return `<div ${base}>${catIcon(f)}</div>`;
+  }
+  // 屋台情報（f.stalls があれば優先、なければカテゴリ別の既定文）
+  function stallsInfo(f){
+    if(f.stalls) return f.stalls;
+    const g = groupOf(f.category);
+    if(g==="例大祭")  return "神輿・露店（屋台）でにぎわう";
+    if(g==="市・縁日") return "露店・出店が多数";
+    if(g==="阿波踊り") return "沿道に露店あり";
+    return "屋台・露店あり";
   }
 
   // 指定日に開催中の祭り（フィルタ適用）
@@ -270,13 +309,15 @@
     const badge = f.status==="confirmed" ? "確定" : "例年";
     const badgeColor = f.status==="confirmed" ? "#d84a1e" : "#c8942f";
     mk.bindPopup(
-      `<div style="min-width:172px;max-width:230px">
-         <div style="font-weight:700;font-size:14px;line-height:1.35;margin-bottom:4px">${f.name}
+      `<div style="min-width:180px;max-width:232px">
+         ${f.image?`<img src="${f.image}" alt="" loading="lazy" onerror="this.remove()" style="width:100%;height:96px;object-fit:cover;border-radius:8px;margin-bottom:6px">`:""}
+         <div style="font-weight:700;font-size:14px;line-height:1.35;margin-bottom:4px">${catIcon(f)} ${f.name}
            <span style="font-size:10px;color:#fff;background:${badgeColor};border-radius:99px;padding:1px 7px;margin-left:2px;white-space:nowrap;vertical-align:middle">${badge}</span>
          </div>
          <div style="font-size:12.5px;color:#d84a1e;font-weight:600">📅 ${whenLabel(f)}</div>
          ${f.time?`<div style="font-size:11px;color:#6b625b;margin-top:3px">🕒 ${f.time}</div>`:""}
          <div style="font-size:11px;color:#6b625b;margin-top:2px">📍 ${f.place}</div>
+         <div style="font-size:11px;color:#6b625b;margin-top:2px">🍡 ${stallsInfo(f)}</div>
          <div style="font-size:11px;margin-top:6px"><a href="${f.url}" target="_blank" rel="noopener" style="color:#e0592a;font-weight:600">詳細・最新情報を見る ↗</a></div>
        </div>`,
       {maxWidth:250, autoPanPadding:[24,24]}
@@ -371,12 +412,18 @@
       const card=document.createElement("div");
       card.className="card"+(f.id===activeId?" active":"");
       card.innerHTML=`
-        <div class="row1">
-          <span class="cname">${f.name}</span>
-          <span class="badge ${f.status}">${f.status==="confirmed"?"確定":"例年"}</span>
+        <div class="card-top">
+          ${thumbHTML(f,58)}
+          <div class="card-main">
+            <div class="row1">
+              <span class="cname">${f.name}</span>
+              <span class="badge ${f.status}">${f.status==="confirmed"?"確定":"例年"}</span>
+            </div>
+            <div class="when">📅 ${whenLabel(f)}${f.time?" ／ "+f.time:""}</div>
+            <div class="place">📍 ${f.place}</div>
+            <div class="stalls">🍡 ${stallsInfo(f)}</div>
+          </div>
         </div>
-        <div class="when">📅 ${whenLabel(f)}${f.time?" ／ "+f.time:""}</div>
-        <div class="place">📍 ${f.place}</div>
         <div class="desc">${f.desc}</div>
         <div class="more"><a href="${f.url}" target="_blank" rel="noopener">詳細・最新情報を見る ↗</a></div>`;
       card.onclick=(e)=>{ if(e.target.tagName!=="A") selectCard(f.id, true); };
