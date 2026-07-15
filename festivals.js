@@ -25,7 +25,7 @@ window.FESTIVALS = [
     category: "商店街の夏祭り",
     status: "confirmed",
     dates: [ { start: "2026-07-18", end: "2026-07-19" } ],
-    time: "昼〜夜",
+    time: "13:30〜21:00",
     desc: "経堂・農大通り商店街の夏祭り。露店やステージでにぎわう。",
     url: "https://shokusanbest.com/setagaya/local-navi/setagaya-summer-festival/"
   },
@@ -37,7 +37,7 @@ window.FESTIVALS = [
     category: "盆踊り",
     status: "confirmed",
     dates: [ { start: "2026-07-25", end: "2026-07-26" } ],
-    time: "夕方〜夜",
+    time: "13:00〜20:00",
     desc: "下北沢駅東口の駅前広場で行われる盆踊り。",
     url: "https://shokusanbest.com/setagaya/local-navi/setagaya-summer-festival/"
   },
@@ -294,6 +294,153 @@ window.FESTIVALS = [
     time: "昼〜夜（2026年の日程は目安）",
     desc: "東玉川エリアの夏〜初秋の例大祭。例年8月第3〜第4日曜前後。2026年の公式日程は未告知のため目安。",
     url: "https://setagaya339.net/seta/maturi/maturi4.htm"
+  },
+
+  // ---------- 夏の盆踊り・地域まつり（2026年 setagaya.guide より） ----------
+  // ※町会・商店街の盆踊りは会場住所が非公開のものが多く、ピンはエリア周辺の目安です。
+  {
+    id: "soshigaya-shoshinkai-bon",
+    name: "祖師谷昇進会 盆踊り大会",
+    place: "祖師谷神明社（祖師谷5-1-16）",
+    lat: 35.6543, lng: 139.5905,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-17", end: "2026-07-18" } ],
+    time: "19:00〜21:00",
+    desc: "祖師谷神明社の境内で行われる盆踊り大会。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "sancha-mizukake",
+    name: "三茶 水かけ祭り",
+    place: "こどものひろば公園（三軒茶屋・太子堂）",
+    lat: 35.6452, lng: 139.6693,
+    category: "夏祭り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-18", end: "2026-07-18" } ],
+    time: "10:00〜13:00",
+    desc: "三軒茶屋のこどものひろば公園で水を掛け合って夏の暑さを吹き飛ばす、子ども向けの水かけ祭り。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "kinuta-nouryou",
+    name: "砧町町会 納涼夏祭り大会",
+    place: "砧エリア（会場周辺の目安）",
+    lat: 35.6298, lng: 139.6000,
+    category: "夏祭り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-18", end: "2026-07-19" } ],
+    time: "15:00〜20:00",
+    desc: "砧町町会の納涼夏祭り。ピンは砧エリア周辺の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "akatsutsumi-fureai",
+    name: "赤堤商店街ふれあいまつり 盆踊り",
+    place: "赤堤商店街（会場周辺の目安）",
+    lat: 35.6588, lng: 139.6362,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-18", end: "2026-07-19" } ],
+    time: "15:00〜21:00",
+    desc: "赤堤商店街のふれあいまつりと盆踊り。ピンは赤堤商店街周辺の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "seijo-bon",
+    name: "成城 納涼盆踊り",
+    place: "成城エリア（会場周辺の目安）",
+    lat: 35.6408, lng: 139.5988,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-18", end: "2026-07-19" } ],
+    time: "17:30〜22:00",
+    desc: "成城の納涼盆踊り。ピンは成城学園前駅周辺の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "chitosefunabashi-bon",
+    name: "納涼盆踊り大会（千歳船橋 参商会）",
+    place: "千歳船橋 参商会商店街（会場周辺の目安）",
+    lat: 35.6556, lng: 139.6203,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-18", end: "2026-07-19" } ],
+    time: "19:00〜",
+    desc: "千歳船橋・参商会商店街振興組合による納涼盆踊り大会。ピンは千歳船橋駅周辺の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "yoga-natsu",
+    name: "ようが夏まつり",
+    place: "用賀エリア（会場周辺の目安）",
+    lat: 35.6262, lng: 139.6335,
+    category: "夏祭り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-22", end: "2026-07-23" } ],
+    time: "17:00〜21:00",
+    desc: "用賀の夏まつり。ピンは用賀駅周辺の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "sazaesan-ennichi",
+    name: "サザエさん縁日",
+    place: "桜新町 サザエさん通り周辺",
+    lat: 35.6270, lng: 139.6415,
+    category: "縁日",
+    status: "confirmed",
+    dates: [ { start: "2026-07-23", end: "2026-07-23" } ],
+    time: "16:00〜20:00",
+    desc: "桜新町・サザエさん通り周辺で行われる縁日。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "rokakoen-bon",
+    name: "芦花公園 納涼盆踊り大会",
+    place: "蘆花恒春園（芦花公園）",
+    lat: 35.6636, lng: 139.5952,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-24", end: "2026-07-24" } ],
+    time: "16:00〜20:30",
+    desc: "芦花公園（蘆花恒春園）の納涼盆踊り大会。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "tamagawa-chokai-bon",
+    name: "玉川町会 盆踊り",
+    place: "玉川エリア（等々力・玉堤方面の目安）",
+    lat: 35.6095, lng: 139.6295,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-24", end: "2026-07-25" } ],
+    time: "19:00〜21:00",
+    desc: "玉川町会の盆踊り。ピンは玉川エリア（等々力・玉堤方面）の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "higashifukasawa-natsu",
+    name: "東深沢町会 夏まつり",
+    place: "深沢エリア（会場周辺の目安）",
+    lat: 35.6255, lng: 139.6598,
+    category: "夏祭り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-25", end: "2026-07-25" } ],
+    time: "17:00〜20:30",
+    desc: "東深沢町会の夏まつり。ピンは深沢エリア周辺の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
+    id: "kitami-bon",
+    name: "喜多見 盆踊り大会",
+    place: "喜多見エリア（会場周辺の目安）",
+    lat: 35.6385, lng: 139.5878,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-25", end: "2026-07-26" } ],
+    time: "16:00〜20:30",
+    desc: "喜多見の盆踊り大会。ピンは喜多見駅周辺の目安。",
+    url: "https://setagaya.guide/events/categories/festival/"
   },
 
   // ---------- 冬（12〜1月） ----------
