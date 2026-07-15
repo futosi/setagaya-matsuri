@@ -92,6 +92,29 @@
   .card .more a{color:var(--accent);}
   .empty-msg{font-size:13px; color:var(--muted); padding:16px 4px; text-align:center;}
 
+  /* Filters */
+  .filters{padding:10px 12px 4px; border-bottom:1px solid var(--line);}
+  .search-wrap{position:relative;}
+  .search{
+    width:100%; border:1px solid var(--line); border-radius:10px; padding:9px 30px 9px 12px;
+    font-size:14px; color:var(--ink); background:#faf8f5; outline:none;
+  }
+  .search:focus{border-color:var(--accent); background:#fff;}
+  .search-clear{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    border:none; background:#e7ded4; color:#6b625b; border-radius:50%;
+    width:20px; height:20px; font-size:11px; line-height:1; cursor:pointer;
+  }
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .chip{
+    border:1px solid var(--line); background:#fff; color:#6b625b;
+    border-radius:99px; padding:5px 11px; font-size:12px; cursor:pointer; user-select:none;
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+  }
+  .chip:active{transform:scale(.96);}
+  .chip.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .chip .cnt{font-size:10px; opacity:.7;}
+
   /* Mobile toggle bar (hidden on desktop) */
   .mobile-tabs{display:none;}
 
@@ -130,6 +153,14 @@
     <div class="mobile-tabs">
       <button data-view="cal" class="on">📅 カレンダー</button>
       <button data-view="list">📋 一覧</button>
+    </div>
+
+    <div class="filters">
+      <div class="search-wrap">
+        <input id="search" class="search" type="search" placeholder="🔍 エリア・名前で検索（例: 奥沢、盆踊り）" autocomplete="off">
+        <button id="searchClear" class="search-clear" aria-label="検索クリア" hidden>✕</button>
+      </div>
+      <div class="chips" id="chips"></div>
     </div>
 
     <div class="cal">
@@ -172,13 +203,33 @@
   function inRange(dateStr, f){
     return f.dates.some(r => dateStr >= r.start && dateStr <= r.end);
   }
-  // 指定日に開催中の祭り
-  function festsOn(dateStr){ return F.filter(f => inRange(dateStr, f)); }
-  // 指定月に1日でもかかる祭り（開始日順）
+  // ---- filters ----
+  // カテゴリをグループにまとめる（フィルタ用）
+  const CAT_GROUPS = ["例大祭","盆踊り","夏祭り","阿波踊り","市・縁日"];
+  function groupOf(cat){
+    if(cat.indexOf("例大祭")>=0) return "例大祭";
+    if(cat.indexOf("盆踊り")>=0) return "盆踊り";
+    if(cat.indexOf("阿波")>=0)   return "阿波踊り";
+    if(cat.indexOf("市")>=0 || cat.indexOf("縁日")>=0 || cat.indexOf("フリーマーケット")>=0) return "市・縁日";
+    return "夏祭り";
+  }
+  const FILTER = { cats:new Set(), text:"" };
+  function passesFilter(f){
+    if(FILTER.cats.size && !FILTER.cats.has(groupOf(f.category))) return false;
+    if(FILTER.text){
+      const hay = (f.name+" "+f.place+" "+f.category+" "+(f.desc||"")).toLowerCase();
+      if(hay.indexOf(FILTER.text) < 0) return false;
+    }
+    return true;
+  }
+
+  // 指定日に開催中の祭り（フィルタ適用）
+  function festsOn(dateStr){ return F.filter(f => passesFilter(f) && inRange(dateStr, f)); }
+  // 指定月に1日でもかかる祭り（開始日順・フィルタ適用）
   function festsInMonth(y, m){ // m:0-based
     const first = `${y}-${String(m+1).padStart(2,"0")}-01`;
     const last  = `${y}-${String(m+1).padStart(2,"0")}-31`;
-    return F.filter(f => f.dates.some(r => r.start <= last && r.end >= first))
+    return F.filter(f => passesFilter(f) && f.dates.some(r => r.start <= last && r.end >= first))
             .sort((a,b)=> firstDate(a).localeCompare(firstDate(b)));
   }
   function firstDate(f){ return f.dates.map(r=>r.start).sort()[0]; }
@@ -244,7 +295,12 @@
   }
 
   // ---- current list (depends on selectedDate / month) ----
+  // フィルタに合う祭りを年間から横断（開始日順）
+  function festsAll(){
+    return F.filter(passesFilter).sort((a,b)=> firstDate(a).localeCompare(firstDate(b)));
+  }
   function currentList(){
+    if(FILTER.text) return festsAll();            // 検索時は月に関係なく年間から探す
     return selectedDate ? festsOn(selectedDate) : festsInMonth(viewY, viewM);
   }
 
@@ -298,7 +354,9 @@
     const cards=document.getElementById("cards");
     const title=document.getElementById("listTitle");
     const list=currentList();
-    if(selectedDate){
+    if(FILTER.text){
+      title.innerHTML=`🔍「${searchEl.value}」の検索結果（${list.length}件） <span class="clear" id="clearSel">✕ 解除</span>`;
+    }else if(selectedDate){
       const d=parse(selectedDate);
       title.innerHTML=`${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})のお祭り <span class="clear" id="clearSel">✕ 選択解除</span>`;
     }else{
@@ -306,7 +364,8 @@
     }
     cards.innerHTML="";
     if(!list.length){
-      cards.innerHTML=`<div class="empty-msg">この${selectedDate?"日":"月"}に登録されたお祭りはありません。</div>`;
+      const filtered = FILTER.cats.size || FILTER.text;
+      cards.innerHTML=`<div class="empty-msg">${filtered?"絞り込み条件に合うお祭りが見つかりません。":"この"+(selectedDate?"日":"月")+"に登録されたお祭りはありません。"}</div>`;
     }
     list.forEach(f=>{
       const card=document.createElement("div");
@@ -324,7 +383,11 @@
       cards.appendChild(card);
     });
     const clr=document.getElementById("clearSel");
-    if(clr) clr.onclick=(e)=>{ e.stopPropagation(); selectedDate=null; activeId=null; renderAll(); fitToList(); };
+    if(clr) clr.onclick=(e)=>{ e.stopPropagation();
+      if(FILTER.text){ searchEl.value=""; FILTER.text=""; searchClear.hidden=true; }
+      else { selectedDate=null; }
+      activeId=null; renderAll(); fitToList();
+    };
   }
 
   function selectCard(id, pan){
@@ -351,9 +414,36 @@
     map.fitBounds(b.pad(0.35), {maxZoom:15, animate:true});
   }
 
-  function renderAll(){ renderCal(); renderList(); updateMarkerVisibility(); }
+  // ---- filter chips ----
+  function renderChips(){
+    const chips=document.getElementById("chips");
+    chips.innerHTML="";
+    CAT_GROUPS.forEach(g=>{
+      const n = F.filter(f=>groupOf(f.category)===g).length;
+      if(!n) return;
+      const chip=document.createElement("div");
+      chip.className="chip"+(FILTER.cats.has(g)?" on":"");
+      chip.innerHTML=`${g}<span class="cnt">${n}</span>`;
+      chip.onclick=()=>{
+        if(FILTER.cats.has(g)) FILTER.cats.delete(g); else FILTER.cats.add(g);
+        activeId=null; renderAll(); fitToList();
+      };
+      chips.appendChild(chip);
+    });
+  }
+
+  function renderAll(){ renderChips(); renderCal(); renderList(); updateMarkerVisibility(); }
 
   // ---- controls ----
+  const searchEl=document.getElementById("search");
+  const searchClear=document.getElementById("searchClear");
+  searchEl.addEventListener("input", ()=>{
+    FILTER.text=searchEl.value.trim().toLowerCase();
+    searchClear.hidden = !searchEl.value;
+    activeId=null; renderAll(); fitToList();
+  });
+  searchClear.onclick=()=>{ searchEl.value=""; FILTER.text=""; searchClear.hidden=true; activeId=null; renderAll(); fitToList(); };
+
   document.getElementById("prev").onclick=()=>{ viewM--; if(viewM<0){viewM=11;viewY--;} selectedDate=null; activeId=null; renderAll(); fitToList(); };
   document.getElementById("next").onclick=()=>{ viewM++; if(viewM>11){viewM=0;viewY++;} selectedDate=null; activeId=null; renderAll(); fitToList(); };
   document.getElementById("today").onclick=()=>{ viewY=TODAY.getFullYear(); viewM=TODAY.getMonth(); selectedDate=ymd(TODAY); activeId=null; renderAll(); fitToList(); };
