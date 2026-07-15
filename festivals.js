@@ -1,8 +1,9 @@
-// 世田谷区のお祭りデータ（2026年 精査版 / 最終更新: 2026-07-15）
+// お祭りデータ（世田谷＋隣接エリア / 2026年 / 最終更新: 2026-07-15）
 // status: "confirmed" = 出典に2026年（または固定日）の日程あり
 //         "annual"    = 例年開催だが2026年の日程は未定・目安（要・最新確認）
+// area   : "世田谷区" / "杉並区" / "目黒区" / "大田区" / "川崎市"（省略時は "世田谷区" 扱い）
 // lat/lng は会場付近のおおよその座標（丁目・駅周辺レベル）。
-// 出典: setagaya.guide / 殖産ベスト世田谷 / 各神社公式・地域情報サイト
+// 出典: setagaya.guide / 殖産ベスト / 各神社・寺・商店街の公式/地域情報サイト
 window.FESTIVALS = [
   // ---------- 夏（7〜8月） ----------
   {
@@ -471,5 +472,173 @@ window.FESTIVALS = [
     time: "9:00〜20:00",
     desc: "1578年の楽市に始まる伝統行事。700店以上の露店が並び各日20万人が訪れる、日本最大級のフリーマーケット。毎年12/15・16と1/15・16の固定開催。",
     url: "https://setagaya.guide/events/setagaya-boroichi/"
+  },
+
+  // ======================================================================
+  //  隣接エリア（杉並区・目黒区・大田区）＋ 神奈川県川崎市
+  // ======================================================================
+
+  // ---------- 杉並区 ----------
+  {
+    id: "koenji-awaodori",
+    name: "東京高円寺阿波おどり",
+    area: "杉並区",
+    place: "高円寺駅周辺（パル商店街・ルック商店街ほか）",
+    lat: 35.7053, lng: 139.6497,
+    category: "阿波踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-08-29", end: "2026-08-30" } ],
+    time: "夕方〜夜",
+    desc: "約1万人の踊り手が参加する都内最大級の阿波おどり。高円寺の街全体が舞台。",
+    url: "https://www.chuo-besthome.co.jp/local/suginamiku-nakano-summer-festival/"
+  },
+  {
+    id: "asagaya-tanabata",
+    name: "阿佐谷七夕まつり",
+    area: "杉並区",
+    place: "阿佐ケ谷駅〜阿佐谷パールセンター商店街",
+    lat: 35.7047, lng: 139.6362,
+    category: "夏祭り",
+    status: "confirmed",
+    dates: [ { start: "2026-08-07", end: "2026-08-11" } ],
+    time: "日中〜夜",
+    desc: "アーケードに手作りの張りぼて飾りが並ぶ、70回超の歴史ある七夕まつり。",
+    url: "https://www.chuosen-rr.com/event/"
+  },
+  {
+    id: "omiya-hachiman",
+    name: "大宮八幡宮 例大祭",
+    area: "杉並区",
+    place: "大宮八幡宮（大宮2-3-1）",
+    lat: 35.6800, lng: 139.6358,
+    category: "神社例大祭",
+    status: "confirmed",
+    dates: [ { start: "2026-09-18", end: "2026-09-21" } ],
+    time: "日中〜夜",
+    desc: "「東京のへそ」大宮八幡宮の秋の例大祭。神輿・奉納行事でにぎわう。",
+    url: "https://kotokoto-sasazuka.com/omiya-matsuri/"
+  },
+
+  // ---------- 目黒区 ----------
+  {
+    id: "meguro-sanma-kumin",
+    name: "目黒のさんま祭り（目黒区民まつり）",
+    area: "目黒区",
+    place: "田道広場公園ほか（目黒1丁目）",
+    lat: 35.6320, lng: 139.7098,
+    category: "夏祭り",
+    status: "annual",
+    dates: [ { start: "2026-09-27", end: "2026-09-27" } ],
+    time: "日中（例年9月下旬）",
+    desc: "落語「目黒のさんま」にちなみ、気仙沼直送のさんまを焼いて振る舞う区民まつり。2026年の日程は目安。",
+    url: "https://www.city.meguro.tokyo.jp/bunkasports/kankou/event-matsuri/index.html"
+  },
+  {
+    id: "meguro-otori",
+    name: "目黒 大鳥神社 例大祭",
+    area: "目黒区",
+    place: "大鳥神社（下目黒3-1-2）",
+    lat: 35.6333, lng: 139.7078,
+    category: "神社例大祭",
+    status: "annual",
+    dates: [ { start: "2026-09-05", end: "2026-09-06" } ],
+    time: "日中〜夜（例年9月上旬）",
+    desc: "目黒区最古の神社の例大祭。隔年で町神輿の連合宮入、露店も多数。2026年の日程は目安。",
+    url: "https://www.enjoytokyo.jp/event/664206/"
+  },
+  {
+    id: "jiyugaoka-megami",
+    name: "自由が丘女神まつり",
+    area: "目黒区",
+    place: "自由が丘駅前一帯",
+    lat: 35.6073, lng: 139.6688,
+    category: "夏祭り",
+    status: "annual",
+    dates: [ { start: "2026-10-10", end: "2026-10-11" } ],
+    time: "日中〜夜（例年10月）",
+    desc: "駅前の「女神像」にちなむ自由が丘最大のまつり。2026年の日程は目安。",
+    url: "https://meguro-kanko.or.jp/event/index.php"
+  },
+
+  // ---------- 大田区 ----------
+  {
+    id: "haneda-matsuri",
+    name: "羽田神社 夏季例大祭（羽田まつり）",
+    area: "大田区",
+    place: "羽田神社（本羽田3-9-12）",
+    lat: 35.5487, lng: 139.7477,
+    category: "神社例大祭",
+    status: "confirmed",
+    dates: [ { start: "2026-07-24", end: "2026-07-26" } ],
+    time: "26日 本社神輿渡御・町内神輿連合渡御15:00〜18:00ほか",
+    desc: "神輿を左右に大きく傾ける独特の担ぎ方「ヨコタ」で知られる、担ぎ手3千人の大祭。",
+    url: "https://www.o-2.jp/event/hanedajinjareitaisai2026/"
+  },
+  {
+    id: "ikegami-oeshiki",
+    name: "池上本門寺 お会式",
+    area: "大田区",
+    place: "池上本門寺（池上1-1-1）",
+    lat: 35.5772, lng: 139.7009,
+    category: "例大祭",
+    status: "confirmed",
+    dates: [ { start: "2026-10-11", end: "2026-10-13" } ],
+    time: "12日夜が万灯練供養のクライマックス",
+    desc: "日蓮聖人の命日に営まれる法要。12日夜は万灯と纏を掲げた数万人の練供養で沿道が埋まる。毎年10/11〜13。",
+    url: "https://honmonji.jp/news/schedule.html"
+  },
+  {
+    id: "rokugo-jinja",
+    name: "六郷神社 例大祭",
+    area: "大田区",
+    place: "六郷神社（東六郷3-10-18）",
+    lat: 35.5405, lng: 139.7118,
+    category: "神社例大祭",
+    status: "annual",
+    dates: [ { start: "2026-06-06", end: "2026-06-07" } ],
+    time: "日中〜夜（例年6月上旬）",
+    desc: "多摩川近く・六郷エリアの古社の例大祭。神輿渡御でにぎわう。2026年の日程は目安。",
+    url: "https://www.o-2.jp/eventinfo/event-list/"
+  },
+
+  // ---------- 神奈川県 川崎市 ----------
+  {
+    id: "kawasaki-sanno",
+    name: "川崎山王祭（稲毛神社）",
+    area: "川崎市",
+    place: "稲毛神社（川崎区宮本町7-7）",
+    lat: 35.5312, lng: 139.7018,
+    category: "神社例大祭",
+    status: "confirmed",
+    dates: [ { start: "2026-06-19", end: "2026-06-21" } ],
+    time: "20日 町内神輿連合渡御／21日 神幸祭「山王ふぇすてぃばる」",
+    desc: "川崎最大の夏祭り。孔雀・玉座の二基の大神輿の渡御で知られる。2026年から6月開催に変更。",
+    url: "https://www.takemikatsuchi.net/schedulelist/sannousai/"
+  },
+  {
+    id: "kawasaki-fuurin",
+    name: "川崎大師 風鈴市",
+    area: "川崎市",
+    place: "川崎大師 平間寺 境内（大師町4-48）",
+    lat: 35.5347, lng: 139.7305,
+    category: "市・縁日",
+    status: "confirmed",
+    dates: [ { start: "2026-07-17", end: "2026-07-21" } ],
+    time: "10:00〜17:00（20日のみ19:00まで）",
+    desc: "全国から800種を超える風鈴が集まる夏の風物詩。涼やかな音色と屋台でにぎわう。",
+    url: "https://www.fuurinichi.com/"
+  },
+  {
+    id: "mizonokuchi-jinja",
+    name: "溝口神社 例大祭",
+    area: "川崎市",
+    place: "溝口神社（高津区溝口2-25-1）",
+    lat: 35.5998, lng: 139.6103,
+    category: "神社例大祭",
+    status: "annual",
+    dates: [ { start: "2026-09-26", end: "2026-09-27" } ],
+    time: "日中〜夜（例年9月下旬）",
+    desc: "多摩川対岸・高津区溝口の鎮守の例大祭。神輿・露店でにぎわう。2026年の日程は目安。",
+    url: "http://www7b.biglobe.ne.jp/~yumaka/walk2.html"
   }
 ];

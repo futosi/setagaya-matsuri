@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>世田谷区 お祭りマップ＆カレンダー</title>
+<title>お祭りマップ＆カレンダー（世田谷・杉並・目黒・大田・川崎）</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
@@ -83,6 +83,7 @@
   .card .cname{font-size:15px; font-weight:700;}
   .card .badge{font-size:10px; padding:2px 7px; border-radius:99px; color:#fff; white-space:nowrap;}
   .badge.confirmed{background:var(--confirmed);} .badge.annual{background:var(--annual);}
+  .area-tag{font-size:10px; padding:2px 7px; border-radius:99px; white-space:nowrap; background:#efe9e1; color:#6b625b;}
   .card .when{font-size:12.5px; color:var(--accent); font-weight:600; margin-top:4px;}
   .card .place{font-size:12px; color:var(--muted); margin-top:2px;}
   .card .desc{font-size:12px; color:#5f564f; margin-top:6px; line-height:1.5; display:none;}
@@ -113,7 +114,9 @@
     border:none; background:#e7ded4; color:#6b625b; border-radius:50%;
     width:20px; height:20px; font-size:11px; line-height:1; cursor:pointer;
   }
-  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .chip-group{margin-top:9px;}
+  .chip-label{font-size:10px; color:var(--muted); font-weight:700; display:block; margin-bottom:5px; letter-spacing:.04em;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px;}
   .chip{
     border:1px solid var(--line); background:#fff; color:#6b625b;
     border-radius:99px; padding:5px 11px; font-size:12px; cursor:pointer; user-select:none;
@@ -151,8 +154,8 @@
 <body>
 <header>
   <span class="logo">🏮</span>
-  <h1>世田谷区 お祭りマップ＆カレンダー</h1>
-  <span class="sub">地図とカレンダーで探す</span>
+  <h1>お祭りマップ＆カレンダー</h1>
+  <span class="sub">世田谷・杉並・目黒・大田・川崎</span>
 </header>
 
 <div class="app">
@@ -165,10 +168,17 @@
 
     <div class="filters">
       <div class="search-wrap">
-        <input id="search" class="search" type="search" placeholder="🔍 エリア・名前で検索（例: 奥沢、盆踊り）" autocomplete="off">
+        <input id="search" class="search" type="search" placeholder="🔍 エリア・名前で検索（例: 奥沢、阿波おどり）" autocomplete="off">
         <button id="searchClear" class="search-clear" aria-label="検索クリア" hidden>✕</button>
       </div>
-      <div class="chips" id="chips"></div>
+      <div class="chip-group">
+        <span class="chip-label">エリア</span>
+        <div class="chips" id="areaChips"></div>
+      </div>
+      <div class="chip-group">
+        <span class="chip-label">種類</span>
+        <div class="chips" id="chips"></div>
+      </div>
     </div>
 
     <div class="cal">
@@ -221,11 +231,16 @@
     if(cat.indexOf("市")>=0 || cat.indexOf("縁日")>=0 || cat.indexOf("フリーマーケット")>=0) return "市・縁日";
     return "夏祭り";
   }
-  const FILTER = { cats:new Set(), text:"" };
+  // エリア（区/市）。area 未指定は世田谷区扱い。
+  const AREAS = ["世田谷区","杉並区","目黒区","大田区","川崎市"];
+  function areaOf(f){ return f.area || "世田谷区"; }
+
+  const FILTER = { cats:new Set(), areas:new Set(), text:"" };
   function passesFilter(f){
+    if(FILTER.areas.size && !FILTER.areas.has(areaOf(f))) return false;
     if(FILTER.cats.size && !FILTER.cats.has(groupOf(f.category))) return false;
     if(FILTER.text){
-      const hay = (f.name+" "+f.place+" "+f.category+" "+(f.desc||"")).toLowerCase();
+      const hay = (f.name+" "+f.place+" "+f.category+" "+areaOf(f)+" "+(f.desc||"")).toLowerCase();
       if(hay.indexOf(FILTER.text) < 0) return false;
     }
     return true;
@@ -260,7 +275,7 @@
   function visibleByPast(f){ return showPast || !isPast(f); }
 
   // ---- map ----
-  const map = L.map("map", {zoomControl:true}).setView([35.646, 139.653], 13);
+  const map = L.map("map", {zoomControl:true}).setView([35.62, 139.68], 11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom:19, attribution:'© OpenStreetMap'
   }).addTo(map);
@@ -290,7 +305,7 @@
          </div>
          <div style="font-size:12.5px;color:#d84a1e;font-weight:600">📅 ${whenLabel(f)}</div>
          ${f.time?`<div style="font-size:11px;color:#6b625b;margin-top:3px">🕒 ${f.time}</div>`:""}
-         <div style="font-size:11px;color:#6b625b;margin-top:2px">📍 ${f.place}</div>
+         <div style="font-size:11px;color:#6b625b;margin-top:2px">📍 ${areaOf(f)}・${f.place}</div>
          <div style="font-size:11px;margin-top:6px"><a href="${f.url}" target="_blank" rel="noopener" style="color:#e0592a;font-weight:600">詳細・最新情報を見る ↗</a></div>
        </div>`,
       {maxWidth:250, autoPanPadding:[24,24]}
@@ -375,6 +390,7 @@
       <div class="row1">
         <span class="cname">${f.name}</span>
         <span class="badge ${f.status}">${f.status==="confirmed"?"確定":"例年"}</span>
+        <span class="area-tag">${areaOf(f)}</span>
       </div>
       <div class="when">📅 ${whenLabel(f)}${f.time?" ／ "+f.time:""}</div>
       <div class="place">📍 ${f.place}</div>
@@ -454,6 +470,22 @@
   }
 
   // ---- filter chips ----
+  function renderAreaChips(){
+    const chips=document.getElementById("areaChips");
+    chips.innerHTML="";
+    AREAS.forEach(a=>{
+      const n = F.filter(f=>areaOf(f)===a).length;
+      if(!n) return;
+      const chip=document.createElement("div");
+      chip.className="chip"+(FILTER.areas.has(a)?" on":"");
+      chip.innerHTML=`${a}<span class="cnt">${n}</span>`;
+      chip.onclick=()=>{
+        if(FILTER.areas.has(a)) FILTER.areas.delete(a); else FILTER.areas.add(a);
+        activeId=null; renderAll(); fitToList();
+      };
+      chips.appendChild(chip);
+    });
+  }
   function renderChips(){
     const chips=document.getElementById("chips");
     chips.innerHTML="";
@@ -471,7 +503,7 @@
     });
   }
 
-  function renderAll(){ renderChips(); renderCal(); renderList(); updateMarkerVisibility(); }
+  function renderAll(){ renderAreaChips(); renderChips(); renderCal(); renderList(); updateMarkerVisibility(); }
 
   // ---- controls ----
   const searchEl=document.getElementById("search");
