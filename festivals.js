@@ -299,6 +299,18 @@ window.FESTIVALS = [
   // ---------- 夏の盆踊り・地域まつり（2026年 setagaya.guide より） ----------
   // ※町会・商店街の盆踊りは会場住所が非公開のものが多く、ピンはエリア周辺の目安です。
   {
+    id: "oyako-bon-hachiman",
+    name: "親子盆踊り大会（八幡小学校）",
+    place: "世田谷区立八幡小学校（玉川田園調布2-17-15）",
+    lat: 35.5983, lng: 139.6608,
+    category: "盆踊り",
+    status: "confirmed",
+    dates: [ { start: "2026-07-18", end: "2026-07-18" } ],
+    time: "17:00〜19:20",
+    desc: "八幡小学校の校庭で行われる親子向けの盆踊り大会。",
+    url: "https://setagaya.guide/events/categories/festival/"
+  },
+  {
     id: "soshigaya-shoshinkai-bon",
     name: "祖師谷昇進会 盆踊り大会",
     place: "祖師谷神明社（祖師谷5-1-16）",
