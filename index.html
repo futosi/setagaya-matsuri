@@ -149,14 +149,19 @@
     .sheet-handle{
       display:flex; flex-direction:column; align-items:center; gap:5px;
       position:sticky; top:0; z-index:5; background:var(--panel);
-      padding:9px 0 10px; cursor:pointer; border-radius:16px 16px 0 0;
+      padding:9px 0 10px; cursor:grab; border-radius:16px 16px 0 0;
       border-bottom:1px solid var(--line);
+      touch-action:none; user-select:none; -webkit-user-select:none;
     }
+    .sheet-handle:active{cursor:grabbing;}
+    body.sheet-dragging .side{transition:none !important;}
     .sheet-handle .grip{width:38px; height:5px; border-radius:99px; background:#d8cfc4;}
     .sheet-handle .sheet-hint{font-size:12px; color:var(--muted); font-weight:700;}
     body:not(.sheet-open) .sheet-handle .sheet-hint::before{content:"▴ ";}
     body.sheet-open .sheet-handle .sheet-hint::before{content:"▾ ";}
   }
+  /* PC幅では、モバイルで付いた inline transform を必ず無効化（レイアウト崩れ防止） */
+  @media (min-width:761px){ .side{transform:none !important;} }
 </style>
 </head>
 <body>
@@ -526,15 +531,82 @@
   document.getElementById("next").onclick=()=>{ viewM++; if(viewM>11){viewM=0;viewY++;} selectedDate=null; activeId=null; renderAll(); fitToList(); };
   document.getElementById("today").onclick=()=>{ viewY=TODAY.getFullYear(); viewM=TODAY.getMonth(); selectedDate=ymd(TODAY); activeId=null; renderAll(); fitToList(); };
 
-  // ---- bottom sheet (mobile) ----
+  // ---- bottom sheet (mobile): タップ開閉＋ドラッグでリサイズ ----
   const sheetHandle=document.getElementById("sheetHandle");
-  if(sheetHandle) sheetHandle.onclick=()=> document.body.classList.toggle("sheet-open");
+  const sheet=document.querySelector(".side");
+  const COLLAPSED_VIS=76;                // しまった時に見える高さ(px)
+  function isMobile(){ return window.matchMedia("(max-width:760px)").matches; }
+  // スナップ位置（translateYのpxオフセット）: [全開, 半分, 収納]
+  function snaps(){
+    const sheetH=sheet.offsetHeight;
+    const halfVis=Math.round(window.innerHeight*0.5);
+    return { sheetH, full:0, half:Math.max(0, sheetH-halfVis), collapsed:sheetH-COLLAPSED_VIS };
+  }
+  let curOffset=null;                    // 現在のtranslateY(px)
+  function setSheet(offset, animate){
+    const s=snaps();
+    curOffset=Math.max(0, Math.min(s.collapsed, offset));
+    sheet.style.transition = animate ? "" : "none";
+    sheet.style.transform = "translateY("+curOffset+"px)";
+    document.body.classList.toggle("sheet-open", curOffset < s.collapsed-4);
+  }
+  function snapNearest(offset){
+    const s=snaps();
+    let best=s.collapsed, bd=Infinity;
+    [s.full, s.half, s.collapsed].forEach(o=>{ const d=Math.abs(o-offset); if(d<bd){bd=d;best=o;} });
+    setSheet(best, true);
+  }
 
-  window.addEventListener("resize", ()=>map.invalidateSize());
+  let dragging=false, startY=0, startOffset=0, moved=false;
+  if(sheetHandle){
+    sheetHandle.addEventListener("pointerdown", e=>{
+      if(!isMobile()) return;
+      dragging=true; moved=false; startY=e.clientY;
+      startOffset = (curOffset==null) ? snaps().collapsed : curOffset;
+      document.body.classList.add("sheet-dragging");
+      try{ sheetHandle.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    sheetHandle.addEventListener("pointermove", e=>{
+      if(!dragging) return;
+      if(Math.abs(e.clientY-startY)>4) moved=true;
+      setSheet(startOffset + (e.clientY-startY), false);
+      e.preventDefault();
+    }, {passive:false});
+    function endDrag(e){
+      if(!dragging) return;
+      dragging=false;
+      document.body.classList.remove("sheet-dragging");
+      try{ sheetHandle.releasePointerCapture(e.pointerId); }catch(_){}
+      void sheet.offsetHeight;   // reflow: 今のドラッグ位置をトランジションの起点に確定
+      const s=snaps();
+      if(!moved){
+        // タップ：収納⇄半開き
+        const isCollapsed = (curOffset==null) || curOffset > s.collapsed-4;
+        setSheet(isCollapsed ? s.half : s.collapsed, true);
+      }else{
+        snapNearest(curOffset);
+      }
+    }
+    sheetHandle.addEventListener("pointerup", endDrag);
+    sheetHandle.addEventListener("pointercancel", endDrag);
+  }
+  // 画面幅の変化に追従（PCではinline transformを解除）
+  function syncSheetForViewport(){
+    if(isMobile()){
+      const s=snaps();
+      setSheet(curOffset==null ? s.collapsed : Math.min(curOffset, s.collapsed), false);
+    }else{
+      sheet.style.transform=""; sheet.style.transition=""; curOffset=null;
+      document.body.classList.remove("sheet-open");
+    }
+    map.invalidateSize();
+  }
+  window.addEventListener("resize", syncSheetForViewport);
 
   // ---- init ----
   renderAll();
   fitToList();
+  syncSheetForViewport();
   setTimeout(()=>map.invalidateSize(), 120);
 })();
 </script>
