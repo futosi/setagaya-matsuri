@@ -124,7 +124,6 @@
   }
   .chip:active{transform:scale(.96);}
   .chip.on{background:var(--accent); border-color:var(--accent); color:#fff;}
-  .chip .cnt{font-size:10px; opacity:.7;}
 
   /* Mobile toggle bar (hidden on desktop) */
   .mobile-tabs{display:none;}
@@ -478,7 +477,7 @@
       if(!n) return;
       const chip=document.createElement("div");
       chip.className="chip"+(FILTER.areas.has(a)?" on":"");
-      chip.innerHTML=`${a}<span class="cnt">${n}</span>`;
+      chip.textContent=a;
       chip.onclick=()=>{
         if(FILTER.areas.has(a)) FILTER.areas.delete(a); else FILTER.areas.add(a);
         activeId=null; renderAll(); fitToList();
@@ -494,7 +493,7 @@
       if(!n) return;
       const chip=document.createElement("div");
       chip.className="chip"+(FILTER.cats.has(g)?" on":"");
-      chip.innerHTML=`${g}<span class="cnt">${n}</span>`;
+      chip.textContent=g;
       chip.onclick=()=>{
         if(FILTER.cats.has(g)) FILTER.cats.delete(g); else FILTER.cats.add(g);
         activeId=null; renderAll(); fitToList();
