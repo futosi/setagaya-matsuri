@@ -557,18 +557,24 @@
     setSheet(best, true);
   }
 
-  let dragging=false, startY=0, startOffset=0, moved=false;
+  const TAP_MAX=12;                        // これ未満の移動はタップ扱い（指ブレを吸収）
+  let dragging=false, startY=0, lastY=0, startOffset=0;
+  function toggleSheet(){
+    const s=snaps();
+    const isCollapsed = (curOffset==null) || curOffset > s.collapsed-4;
+    setSheet(isCollapsed ? s.half : s.collapsed, true);   // 収納⇄半開き
+  }
   if(sheetHandle){
     sheetHandle.addEventListener("pointerdown", e=>{
       if(!isMobile()) return;
-      dragging=true; moved=false; startY=e.clientY;
+      dragging=true; startY=e.clientY; lastY=e.clientY;
       startOffset = (curOffset==null) ? snaps().collapsed : curOffset;
       document.body.classList.add("sheet-dragging");
       try{ sheetHandle.setPointerCapture(e.pointerId); }catch(_){}
     });
     sheetHandle.addEventListener("pointermove", e=>{
       if(!dragging) return;
-      if(Math.abs(e.clientY-startY)>4) moved=true;
+      lastY=e.clientY;
       setSheet(startOffset + (e.clientY-startY), false);
       e.preventDefault();
     }, {passive:false});
@@ -578,14 +584,8 @@
       document.body.classList.remove("sheet-dragging");
       try{ sheetHandle.releasePointerCapture(e.pointerId); }catch(_){}
       void sheet.offsetHeight;   // reflow: 今のドラッグ位置をトランジションの起点に確定
-      const s=snaps();
-      if(!moved){
-        // タップ：収納⇄半開き
-        const isCollapsed = (curOffset==null) || curOffset > s.collapsed-4;
-        setSheet(isCollapsed ? s.half : s.collapsed, true);
-      }else{
-        snapNearest(curOffset);
-      }
+      if(Math.abs(lastY-startY) < TAP_MAX) toggleSheet();  // タップ：開閉
+      else snapNearest(curOffset);                          // ドラッグ：最寄りにスナップ
     }
     sheetHandle.addEventListener("pointerup", endDrag);
     sheetHandle.addEventListener("pointercancel", endDrag);
