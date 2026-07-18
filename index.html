@@ -466,9 +466,12 @@
     if(activeId && f){
       if(pan) map.setView([f.lat,f.lng], 15, {animate:true});
       markers[f.id] && markers[f.id].openPopup && null;
-      // scroll card into view
-      const el=document.querySelector('#cards .card[data-id="'+id+'"]');
-      if(el) el.scrollIntoView({behavior:"smooth", block:"nearest"});
+      // 一覧が見えている時だけカードへスクロール（モバイルでシート収納中はスクロールしない）
+      const listVisible = !isMobile() || document.body.classList.contains("sheet-open");
+      if(listVisible){
+        const el=document.querySelector('#cards .card[data-id="'+id+'"]');
+        if(el) el.scrollIntoView({block:"nearest"});
+      }
     }
     // re-mark selected on markers via re-render not needed
     renderCal();
@@ -548,7 +551,9 @@
     curOffset=Math.max(0, Math.min(s.collapsed, offset));
     sheet.style.transition = animate ? "" : "none";
     sheet.style.transform = "translateY("+curOffset+"px)";
-    document.body.classList.toggle("sheet-open", curOffset < s.collapsed-4);
+    const open = curOffset < s.collapsed-4;
+    document.body.classList.toggle("sheet-open", open);
+    if(!open) sheet.scrollTop = 0;   // 収納時は中身のスクロールを先頭に戻す（ハンドルが必ず見える）
   }
   function snapNearest(offset){
     const s=snaps();
